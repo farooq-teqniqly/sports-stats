@@ -27,6 +27,10 @@
 - Create parent directories with `Path.mkdir(parents=True, exist_ok=True)` before writing files
 - Imports: stdlib → third-party → local, each group separated by a blank line
 
+## Git
+
+- Commit subject line must be under 100 characters
+
 ## Testing
 
 - Framework: pytest
