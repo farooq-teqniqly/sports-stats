@@ -34,3 +34,4 @@
 - Mock HTTP responses with `unittest.mock.MagicMock(spec=requests.Response)`
 - Use `tmp_path` fixture for file I/O tests
 - Test both happy path and error/edge cases (empty input, unknown keys, failed responses)
+- Run `.\scripts\python.exe -m pytest tests\ -v` after every code change; all tests must pass before a task is complete
