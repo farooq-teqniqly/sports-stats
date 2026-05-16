@@ -1,7 +1,9 @@
+from collections.abc import Generator
+
 from bs4 import BeautifulSoup
 
 
-def get_draft_stats(filename: str, stats: list[str]):
+def get_draft_stats(filename: str, stats: list[str]) -> Generator[dict, None, None]:
     with open(filename, "r", encoding="utf-8") as f:
         soup = BeautifulSoup(f, "html.parser")
 
@@ -17,10 +19,13 @@ def get_draft_stats(filename: str, stats: list[str]):
             continue
 
         player_name = player_cell.get_text(strip=True)
-        player_stats = {"player": player_name}
+        player_stats = {"player": player_name, "missing": []}
 
         for stat in stats_set:
             cell = row.find(attrs={"data-stat": stat})
-            player_stats[stat] = cell.get_text(strip=True) if cell else None
+            value = cell.get_text(strip=True) if cell else None
+            player_stats[stat] = value
+            if not value:
+                player_stats["missing"].append(stat)
 
         yield player_stats

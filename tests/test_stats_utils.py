@@ -37,8 +37,20 @@ def test_get_draft_stats_unknown_stat_returns_none():
         assert player["nonexistent_stat"] is None
 
 
+def test_get_draft_stats_unknown_stat_appears_in_missing():
+    results = list(get_draft_stats(str(DRAFT_FILE), ["ws", "nonexistent_stat"]))
+    for player in results:
+        assert "nonexistent_stat" in player["missing"]
+
+
+def test_get_draft_stats_valid_stats_not_in_missing():
+    results = list(get_draft_stats(str(DRAFT_FILE), STATS))
+    first = results[0]
+    assert first["missing"] == []
+
+
 def test_get_draft_stats_empty_stats_yields_player_key_only():
     results = list(get_draft_stats(str(DRAFT_FILE), []))
     assert len(results) > 0
     for player in results:
-        assert list(player.keys()) == ["player"]
+        assert set(player.keys()) == {"player", "missing"}
