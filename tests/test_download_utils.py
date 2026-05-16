@@ -10,13 +10,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 from download_utils import download_url, save_html
 
 
-def make_response(status_code: int = 200, content: bytes = b"<html></html>") -> MagicMock:
+def make_response(
+    status_code: int = 200, content: bytes = b"<html></html>"
+) -> MagicMock:
     response = MagicMock(spec=requests.Response)
     response.status_code = status_code
     response.content = content
     response.raise_for_status.side_effect = (
-        None if status_code < 400
-        else requests.HTTPError(response=response)
+        None if status_code < 400 else requests.HTTPError(response=response)
     )
     return response
 

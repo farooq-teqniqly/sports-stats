@@ -27,6 +27,11 @@
 - Create parent directories with `Path.mkdir(parents=True, exist_ok=True)` before writing files
 - Imports: stdlib → third-party → local, each group separated by a blank line
 
+## Formatting
+
+- Formatter: Black (enforced via pre-commit hook)
+- Run `black utils\ tests\` manually if needed
+
 ## Git
 
 - Commit subject line must be under 100 characters

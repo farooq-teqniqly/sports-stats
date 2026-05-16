@@ -36,6 +36,6 @@ def save_html(response: Response, filename: str) -> None:
         f.write(soup.prettify())
 
 
-if (__name__ == "__main__"):
+if __name__ == "__main__":
     response = download_url("https://www.basketball-reference.com/draft/NBA_2000.html")
     save_html(response, "../data/bball/drafts/nba_draft_2000.html")

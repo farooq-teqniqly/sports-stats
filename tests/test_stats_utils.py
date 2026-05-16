@@ -5,7 +5,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
 from stats_utils import get_draft_stats
 
-DRAFT_FILE = Path(__file__).parent.parent / "data" / "bball" / "drafts" / "nba_draft_2000.html"
+DRAFT_FILE = (
+    Path(__file__).parent.parent / "data" / "bball" / "drafts" / "nba_draft_2000.html"
+)
 STATS = ["ws", "ws_per_48", "bpm", "vorp"]
 
 

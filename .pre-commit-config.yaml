@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        entry: black
+        language: python
+        additional_dependencies: ["black==26.5.0"]
+        types: [python]
