@@ -1,25 +1,40 @@
+import requests
+from pathlib import Path
+
 from bs4 import BeautifulSoup
 from requests import Response
 
 
-def download_url(url: str) -> Response:
-    import requests
+def download_url(url: str, timeout: int = 30) -> Response:
+    if not url or not url.strip():
+        raise ValueError("url must not be empty")
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
     }
 
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=timeout)
+    response.raise_for_status()
 
     return response
 
+
 def save_html(response: Response, filename: str) -> None:
-    from bs4 import BeautifulSoup
+    if response is None:
+        raise ValueError("response must not be None")
+
+    if not filename or not filename.strip():
+        raise ValueError("filename must not be empty")
+
+    response.raise_for_status()
+
+    Path(filename).parent.mkdir(parents=True, exist_ok=True)
 
     soup = BeautifulSoup(response.content, "html.parser")
 
     with open(filename, "w", encoding="utf-8") as f:
         f.write(soup.prettify())
+
 
 if (__name__ == "__main__"):
     response = download_url("https://www.basketball-reference.com/draft/NBA_2000.html")

@@ -1,31 +1,63 @@
 import sys
 from pathlib import Path
+from unittest.mock import MagicMock
+
+import pytest
+import requests
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
-from stats_utils import get_draft_stats
-
-DRAFT_FILE = Path(__file__).parent.parent / "data" / "bball" / "drafts" / "nba_draft_2000.html"
-STATS = ["ws", "ws_per_48", "bpm", "vorp"]
+from download_utils import download_url, save_html
 
 
-def test_get_draft_stats_yields_results():
-    results = list(get_draft_stats(str(DRAFT_FILE), STATS))
-    assert len(results) > 0
+def make_response(status_code: int = 200, content: bytes = b"<html></html>") -> MagicMock:
+    response = MagicMock(spec=requests.Response)
+    response.status_code = status_code
+    response.content = content
+    response.raise_for_status.side_effect = (
+        None if status_code < 400
+        else requests.HTTPError(response=response)
+    )
+    return response
 
 
-def test_get_draft_stats_contains_requested_stat_keys():
-    results = list(get_draft_stats(str(DRAFT_FILE), STATS))
-    for player in results:
-        for stat in STATS:
-            assert stat in player, f"'{stat}' missing for {player.get('player')}"
+def test_download_url_raises_on_empty_url():
+    with pytest.raises(ValueError):
+        download_url("")
 
 
-def test_get_draft_stats_values_populated():
-    results = list(get_draft_stats(str(DRAFT_FILE), STATS))
-    first = results[0]
-    assert first["player"] == "Kenyon Martin"
-    assert first["ws"] == "48.0"
-    assert first["ws_per_48"] == ".100"
-    assert first["bpm"] == "0.1"
-    assert first["vorp"] == "12.1"
+def test_download_url_raises_on_blank_url():
+    with pytest.raises(ValueError):
+        download_url("   ")
+
+
+def test_save_html_raises_on_none_response():
+    with pytest.raises(ValueError):
+        save_html(None, "out.html")
+
+
+def test_save_html_raises_on_empty_filename():
+    with pytest.raises(ValueError):
+        save_html(make_response(), "")
+
+
+def test_save_html_raises_on_blank_filename():
+    with pytest.raises(ValueError):
+        save_html(make_response(), "   ")
+
+
+def test_save_html_raises_on_failed_response():
+    with pytest.raises(requests.HTTPError):
+        save_html(make_response(status_code=404), "out.html")
+
+
+def test_save_html_creates_parent_dirs(tmp_path):
+    out_file = tmp_path / "a" / "b" / "out.html"
+    save_html(make_response(), str(out_file))
+    assert out_file.exists()
+
+
+def test_save_html_writes_file(tmp_path):
+    out_file = tmp_path / "out.html"
+    save_html(make_response(content=b"<html><body></body></html>"), str(out_file))
+    assert out_file.read_text(encoding="utf-8").strip() != ""
