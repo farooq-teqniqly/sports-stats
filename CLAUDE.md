@@ -30,6 +30,7 @@
 ## Git
 
 - Commit subject line must be under 100 characters
+- PR description must be under 100 words
 
 ## Testing
 
