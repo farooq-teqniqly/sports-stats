@@ -28,6 +28,10 @@
 - Create parent directories with `Path.mkdir(parents=True, exist_ok=True)` before writing files
 - Imports: stdlib → third-party → local, each group separated by a blank line
 
+## Docker
+
+- Use `docker` commands by default; if `docker` is not available, use `podman` instead
+
 ## Formatting
 
 - Formatter: Black (enforced via pre-commit hook)

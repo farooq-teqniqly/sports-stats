@@ -135,6 +135,7 @@ celerybeat.pid
 *.sage.py
 
 # Virtualenv
+Include/
 scripts/
 pyvenv.cfg
 
@@ -204,3 +205,9 @@ marimo/_lsp/
 __marimo__/
 
 *.code-workspace
+
+# Docker bind-mount data
+container-data/
+
+# Claude
+.claude/settings.local.json
