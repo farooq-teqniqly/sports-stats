@@ -3,7 +3,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from models import NBAAdvancedStats, NBAPlayer
+from models import NBACareerStats, Player
 from download_utils import download_url, save_html
 from stats_utils import get_draft_stats
 
@@ -53,7 +53,7 @@ def import_draft_class(year: int, session: Session) -> None:
                 stats["missing"],
             )
 
-        session.merge(NBAPlayer.from_draft_stats(stats))
-        session.merge(NBAAdvancedStats.from_draft_stats(player_id, stats))
+        session.merge(Player.from_draft_stats(stats, draft_year=year))
+        session.merge(NBACareerStats.from_draft_stats(player_id, stats))
 
     session.commit()

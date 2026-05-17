@@ -8,7 +8,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
 from nba_draft_service import import_draft_class
-from models import NBAAdvancedStats, NBAPlayer
+from models import NBACareerStats, Player
 
 
 def _make_response(status_code: int = 200) -> MagicMock:
@@ -56,8 +56,8 @@ def test_import_draft_class_merges_player_and_stats(mock_dl, mock_save, mock_par
 
     merge_calls = session.merge.call_args_list
     assert len(merge_calls) == 2
-    assert isinstance(merge_calls[0].args[0], NBAPlayer)
-    assert isinstance(merge_calls[1].args[0], NBAAdvancedStats)
+    assert isinstance(merge_calls[0].args[0], Player)
+    assert isinstance(merge_calls[1].args[0], NBACareerStats)
 
 
 @patch("nba_draft_service.get_draft_stats")

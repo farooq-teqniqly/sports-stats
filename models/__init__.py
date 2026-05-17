@@ -1,117 +1,78 @@
-from enum import StrEnum
-
-from sqlalchemy import Float, ForeignKey, ForeignKeyConstraint, String
+from sqlalchemy import Float, ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-
-
-class SportTypeEnum(StrEnum):
-    NBA = "NBA"
-    NFL = "NFL"
-    MLB = "MLB"
-    NCAA = "NCAA"
 
 
 class Base(DeclarativeBase):
     pass
 
 
-class SportType(Base):
-    """ORM model for a sport type.
-
-    Attributes:
-        code: Short sport identifier (e.g. ``NBA``), used as primary key.
-    """
-
-    __tablename__ = "sport_types"
-
-    code: Mapped[str] = mapped_column(String(20), primary_key=True)
-
-
 class Player(Base):
-    """ORM model for a player across sports.
+    """ORM model for a player.
 
     Attributes:
         id: Basketball Reference player ID (e.g. ``martike01``), used as primary key.
         name: Player name.
-        sport: Sport discriminator (see SportTypeEnum).
+        nba_career_stats: Related NBACareerStats record, if present.
     """
 
     __tablename__ = "players"
-    __mapper_args__ = {
-        "polymorphic_on": "sport",
-    }
+    __table_args__ = {"schema": "nba"}
 
     id: Mapped[str] = mapped_column(String(20), primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    sport: Mapped[str] = mapped_column(
-        String(20), ForeignKey("sport_types.code"), primary_key=True
-    )
+    draft_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
-
-class NBAPlayer(Player):
-    """Player subtype for NBA players.
-
-    Attributes:
-        advanced_stats: Related NBAAdvancedStats record.
-    """
-
-    __mapper_args__ = {"polymorphic_identity": SportTypeEnum.NBA}
-
-    advanced_stats: Mapped["NBAAdvancedStats"] = relationship(back_populates="player")
+    nba_career_stats: Mapped["NBACareerStats"] = relationship(back_populates="player")
 
     @classmethod
-    def from_draft_stats(cls, stats: dict) -> "NBAPlayer":
-        """Create an NBAPlayer instance from a dict yielded by get_draft_stats.
+    def from_draft_stats(cls, stats: dict, draft_year: int | None = None) -> "Player":
+        """Create a Player instance from a dict yielded by get_draft_stats.
 
         Args:
             stats: Dict with keys ``player``, ``player_id``.
+            draft_year: Year the player was drafted, or None if undrafted.
 
         Returns:
-            A new NBAPlayer instance.
+            A new Player instance.
         """
-        return cls(id=stats["player_id"], name=stats["player"])
+        return cls(id=stats["player_id"], name=stats["player"], draft_year=draft_year)
 
 
-class NBAAdvancedStats(Base):
-    """ORM model for NBA player advanced stats sourced from Basketball Reference draft pages.
+class NBACareerStats(Base):
+    """ORM model for NBA player career stats sourced from Basketball Reference draft pages.
 
     Attributes:
         player_id: FK to players.id.
-        player_sport: FK to players.sport.
         ws: Win Shares.
         ws_48: Win Shares Per 48 Minutes.
         bpm: Box Plus/Minus.
         vorp: Value Over Replacement Player.
-        player: Related NBAPlayer record.
+        player: Related Player record.
     """
 
-    __tablename__ = "advanced_stats"
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ["player_id", "player_sport"],
-            ["players.id", "players.sport"],
-        ),
-    )
+    __tablename__ = "career_stats"
+    __table_args__ = {"schema": "nba"}
 
-    player_id: Mapped[str] = mapped_column(String(20), primary_key=True)
-    player_sport: Mapped[str] = mapped_column(String(20), default=SportTypeEnum.NBA)
+    player_id: Mapped[str] = mapped_column(
+        String(20), ForeignKey("nba.players.id"), primary_key=True
+    )
     ws: Mapped[float | None] = mapped_column(Float, nullable=True)
     ws_48: Mapped[float | None] = mapped_column(Float, nullable=True)
     bpm: Mapped[float | None] = mapped_column(Float, nullable=True)
     vorp: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    player: Mapped["NBAPlayer"] = relationship(back_populates="advanced_stats")
+    player: Mapped["Player"] = relationship(back_populates="nba_career_stats")
 
     @classmethod
-    def from_draft_stats(cls, player_id: str, stats: dict) -> "NBAAdvancedStats":
-        """Create an NBAAdvancedStats instance from a dict yielded by get_draft_stats.
+    def from_draft_stats(cls, player_id: str, stats: dict) -> "NBACareerStats":
+        """Create an NBACareerStats instance from a dict yielded by get_draft_stats.
 
         Args:
             player_id: Basketball Reference player ID.
-            stats: Dict with keys ``ws``, ``ws_48``, ``bpm``, ``vorp``.
+            stats: Dict with keys ``ws``, ``ws_per_48``, ``bpm``, ``vorp``.
 
         Returns:
-            A new NBAAdvancedStats instance with float-converted stat values.
+            A new NBACareerStats instance with float-converted stat values.
         """
 
         def to_float(value: str | None) -> float | None:
@@ -122,7 +83,6 @@ class NBAAdvancedStats(Base):
 
         return cls(
             player_id=player_id,
-            player_sport=SportTypeEnum.NBA,
             ws=to_float(stats.get("ws")),
             ws_48=to_float(stats.get("ws_per_48")),
             bpm=to_float(stats.get("bpm")),
