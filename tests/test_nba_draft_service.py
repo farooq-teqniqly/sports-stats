@@ -105,11 +105,12 @@ def test_import_draft_class_logs_warning_for_missing_stats(
 @patch("nba_draft_service.get_draft_stats")
 @patch("nba_draft_service.save_html")
 @patch("nba_draft_service.download_url")
-def test_import_draft_class_downloads_correct_url(mock_dl, mock_save, mock_parse):
+def test_import_draft_class_downloads_correct_url(mock_dl, mock_save, mock_parse, tmp_path):
     mock_dl.return_value = _make_response()
     mock_parse.return_value = iter([])
 
-    import_draft_class(2000, MagicMock())
+    with patch("nba_draft_service._DRAFT_HTML_DIR", tmp_path):
+        import_draft_class(2000, MagicMock())
 
     mock_dl.assert_called_once_with(
         "https://www.basketball-reference.com/draft/NBA_2000.html"
