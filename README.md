@@ -53,6 +53,57 @@ for player in get_draft_stats("data/bball/drafts/nba_draft_2000.html", ["pts", "
     print(player)
 ```
 
+## Database Migrations
+
+Migrations use [Alembic](https://alembic.sqlalchemy.org/) against SQL Server. Copy `.env.example` to `.env` and set credentials before running any migration command.
+
+**Start SQL Server:**
+
+```powershell
+# Use podman if docker is not available
+docker compose up -d
+# or
+podman compose up -d
+```
+
+**Create the database (first time only):**
+
+```powershell
+.\Scripts\python.exe -c "
+import pyodbc, os
+conn = pyodbc.connect(
+    f'DRIVER={ODBC Driver 18 for SQL Server};SERVER=127.0.0.1,1433;DATABASE=master;UID=sa;PWD={os.environ[\"SA_PASSWORD\"]};TrustServerCertificate=yes',
+    autocommit=True
+)
+conn.execute(\"IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'sports_stats') CREATE DATABASE sports_stats\")
+conn.close()
+"
+```
+
+**Generate a migration after changing models:**
+
+```powershell
+$env:SA_PASSWORD = "<password>"; $env:DB_NAME = "sports_stats"
+.\scripts\alembic.exe revision --autogenerate -m "describe your change"
+```
+
+Review the generated file in `migrations/versions/` before applying — autogenerate can miss some changes (e.g. renamed columns are detected as drop + add).
+
+**Apply all pending migrations:**
+
+```powershell
+$env:SA_PASSWORD = "<password>"; $env:DB_NAME = "sports_stats"
+.\scripts\alembic.exe upgrade head
+```
+
+**Other useful commands:**
+
+```powershell
+.\scripts\alembic.exe current          # show current revision
+.\scripts\alembic.exe history          # list all revisions
+.\scripts\alembic.exe downgrade -1     # roll back one revision
+```
+
 ## Formatting
 
 Black enforced via pre-commit. Run manually:

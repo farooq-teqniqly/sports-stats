@@ -27,6 +27,7 @@ def test_get_draft_stats_values_populated():
     results = list(get_draft_stats(str(DRAFT_FILE), STATS))
     first = results[0]
     assert first["player"] == "Kenyon Martin"
+    assert first["player_id"] == "martike01"
     assert first["ws"] == "48.0"
     assert first["ws_per_48"] == ".100"
     assert first["bpm"] == "0.1"
@@ -55,4 +56,4 @@ def test_get_draft_stats_empty_stats_yields_player_key_only():
     results = list(get_draft_stats(str(DRAFT_FILE), []))
     assert len(results) > 0
     for player in results:
-        assert set(player.keys()) == {"player", "missing"}
+        assert set(player.keys()) == {"player", "player_id", "missing"}
