@@ -68,10 +68,10 @@ def test_logs_warning_for_missing_stats(
     mock_parse.return_value = iter([_make_stats(missing=["ws", "bpm"])])
 
     with patch("nba_draft_service._DRAFT_HTML_DIR", tmp_path):
-        with caplog.at_level(logging.WARNING, logger="nba_draft_service"):
+        with caplog.at_level(logging.WARNING):
             import_draft_class(2000, MagicMock())
 
-    assert any("missing stats" in r.message for r in caplog.records)
+    assert any("missing stats" in msg for msg in caplog.messages)
 
 
 @patch("nba_draft_service.get_draft_stats")
