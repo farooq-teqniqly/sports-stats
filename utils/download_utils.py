@@ -6,6 +6,19 @@ from requests import Response
 
 
 def download_url(url: str, timeout: int = 30) -> Response:
+    """Fetch a URL using a browser-like User-Agent header.
+
+    Args:
+        url: The URL to fetch. Must not be empty or blank.
+        timeout: Request timeout in seconds. Defaults to 30.
+
+    Returns:
+        The HTTP response object.
+
+    Raises:
+        ValueError: If url is empty or blank.
+        requests.HTTPError: If the response status indicates an error.
+    """
     if not url or not url.strip():
         raise ValueError("url must not be empty")
 
@@ -20,6 +33,16 @@ def download_url(url: str, timeout: int = 30) -> Response:
 
 
 def save_html(response: Response, filename: str) -> None:
+    """Parse and pretty-print response HTML, then write it to a file.
+
+    Args:
+        response: A successful HTTP response containing HTML content.
+        filename: Destination file path. Parent directories are created if absent.
+
+    Raises:
+        ValueError: If response is None or filename is empty or blank.
+        requests.HTTPError: If the response status indicates an error.
+    """
     if response is None:
         raise ValueError("response must not be None")
 

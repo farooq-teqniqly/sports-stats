@@ -12,6 +12,7 @@
 - Type annotations required on all function signatures
 - Use `collections.abc.Generator` for generator return types
 - No comments unless the why is non-obvious
+- All public functions must have a docstring following PEP 257 (one-line or multi-line)
 
 ## Dependencies
 

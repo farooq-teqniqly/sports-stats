@@ -4,6 +4,18 @@ from bs4 import BeautifulSoup
 
 
 def get_draft_stats(filename: str, stats: list[str]) -> Generator[dict, None, None]:
+    """Yield per-player stat dictionaries parsed from a saved Basketball Reference draft page.
+
+    Each yielded dict contains a ``player`` key, a ``missing`` list of stats with no
+    recorded value, and one key per requested stat mapped to its string value or None.
+
+    Args:
+        filename: Path to a saved Basketball Reference draft HTML file.
+        stats: List of ``data-stat`` attribute names to extract (e.g. ``["pts", "trb"]``).
+
+    Yields:
+        A dict per player row with keys: ``player``, ``missing``, and one key per stat.
+    """
     with open(filename, "r", encoding="utf-8") as f:
         soup = BeautifulSoup(f, "html.parser")
 
