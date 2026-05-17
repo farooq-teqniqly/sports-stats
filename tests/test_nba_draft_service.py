@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
@@ -131,3 +131,28 @@ def test_import_draft_class_merges_multiple_players(mock_dl, mock_save, mock_par
     import_draft_class(2000, session)
 
     assert session.merge.call_count == 4
+
+
+@patch("nba_draft_service.get_draft_stats")
+@patch("nba_draft_service.save_html")
+@patch("nba_draft_service.download_url")
+def test_import_draft_class_raises_on_http_error(mock_dl, mock_save, mock_parse, tmp_path):
+    mock_dl.side_effect = requests.HTTPError()
+
+    with patch("nba_draft_service._DRAFT_HTML_DIR", tmp_path):
+        with pytest.raises(requests.HTTPError):
+            import_draft_class(2000, MagicMock())
+
+
+@patch("nba_draft_service.get_draft_stats")
+@patch("nba_draft_service.save_html")
+@patch("nba_draft_service.download_url")
+def test_import_draft_class_uses_cached_html(mock_dl, mock_save, mock_parse, tmp_path):
+    (tmp_path / "nba_draft_2000.html").write_text("<html/>")
+    mock_parse.return_value = iter([])
+
+    with patch("nba_draft_service._DRAFT_HTML_DIR", tmp_path):
+        import_draft_class(2000, MagicMock())
+
+    mock_dl.assert_not_called()
+    mock_save.assert_not_called()
