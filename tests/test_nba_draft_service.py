@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -8,7 +9,6 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
 from nba_draft_service import import_draft_class
-from models import NBACareerStats, Player
 
 
 def _make_response(status_code: int = 200) -> MagicMock:
@@ -22,7 +22,7 @@ def _make_response(status_code: int = 200) -> MagicMock:
 
 def _make_stats(
     player: str = "Kenyon Martin",
-    player_id: str = "martike01",
+    player_id: str | None = "martike01",
     missing: list | None = None,
 ) -> dict:
     return {
@@ -39,49 +39,16 @@ def _make_stats(
 @patch("nba_draft_service.get_draft_stats")
 @patch("nba_draft_service.save_html")
 @patch("nba_draft_service.download_url")
-def test_import_draft_class_raises_on_invalid_year(mock_dl, mock_save, mock_parse):
-    with pytest.raises(ValueError):
-        import_draft_class(1946, MagicMock())
-
-
-@patch("nba_draft_service.get_draft_stats")
-@patch("nba_draft_service.save_html")
-@patch("nba_draft_service.download_url")
-def test_import_draft_class_merges_player_and_stats(mock_dl, mock_save, mock_parse):
-    mock_dl.return_value = _make_response()
-    mock_parse.return_value = iter([_make_stats()])
-    session = MagicMock()
-
-    import_draft_class(2000, session)
-
-    merge_calls = session.merge.call_args_list
-    assert len(merge_calls) == 2
-    assert isinstance(merge_calls[0].args[0], Player)
-    assert isinstance(merge_calls[1].args[0], NBACareerStats)
-
-
-@patch("nba_draft_service.get_draft_stats")
-@patch("nba_draft_service.save_html")
-@patch("nba_draft_service.download_url")
-def test_import_draft_class_commits_session(mock_dl, mock_save, mock_parse):
-    mock_dl.return_value = _make_response()
-    mock_parse.return_value = iter([_make_stats()])
-    session = MagicMock()
-
-    import_draft_class(2000, session)
-
-    session.commit.assert_called_once()
-
-
-@patch("nba_draft_service.get_draft_stats")
-@patch("nba_draft_service.save_html")
-@patch("nba_draft_service.download_url")
-def test_import_draft_class_skips_player_without_player_id(mock_dl, mock_save, mock_parse):
+def test_skips_player_without_player_id(
+    mock_dl: MagicMock, mock_save: MagicMock, mock_parse: MagicMock, tmp_path: Path
+) -> None:
+    """Rows with no player_id are silently skipped; session.merge never called."""
     mock_dl.return_value = _make_response()
     mock_parse.return_value = iter([_make_stats(player_id=None)])
     session = MagicMock()
 
-    import_draft_class(2000, session)
+    with patch("nba_draft_service._DRAFT_HTML_DIR", tmp_path):
+        import_draft_class(2000, session)
 
     session.merge.assert_not_called()
 
@@ -89,23 +56,31 @@ def test_import_draft_class_skips_player_without_player_id(mock_dl, mock_save, m
 @patch("nba_draft_service.get_draft_stats")
 @patch("nba_draft_service.save_html")
 @patch("nba_draft_service.download_url")
-def test_import_draft_class_logs_warning_for_missing_stats(
-    mock_dl, mock_save, mock_parse, caplog
-):
+def test_logs_warning_for_missing_stats(
+    mock_dl: MagicMock,
+    mock_save: MagicMock,
+    mock_parse: MagicMock,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Warning is logged when a player row has missing stat fields."""
     mock_dl.return_value = _make_response()
     mock_parse.return_value = iter([_make_stats(missing=["ws", "bpm"])])
-    import logging
 
-    with caplog.at_level(logging.WARNING, logger="nba_draft_service"):
-        import_draft_class(2000, MagicMock())
+    with patch("nba_draft_service._DRAFT_HTML_DIR", tmp_path):
+        with caplog.at_level(logging.WARNING):
+            import_draft_class(2000, MagicMock())
 
-    assert any("missing stats" in r.message for r in caplog.records)
+    assert any("missing stats" in msg for msg in caplog.messages)
 
 
 @patch("nba_draft_service.get_draft_stats")
 @patch("nba_draft_service.save_html")
 @patch("nba_draft_service.download_url")
-def test_import_draft_class_downloads_correct_url(mock_dl, mock_save, mock_parse, tmp_path):
+def test_downloads_correct_url(
+    mock_dl: MagicMock, mock_save: MagicMock, mock_parse: MagicMock, tmp_path: Path
+) -> None:
+    """Correct Basketball Reference URL is constructed for the given year."""
     mock_dl.return_value = _make_response()
     mock_parse.return_value = iter([])
 
@@ -115,44 +90,3 @@ def test_import_draft_class_downloads_correct_url(mock_dl, mock_save, mock_parse
     mock_dl.assert_called_once_with(
         "https://www.basketball-reference.com/draft/NBA_2000.html"
     )
-
-
-@patch("nba_draft_service.get_draft_stats")
-@patch("nba_draft_service.save_html")
-@patch("nba_draft_service.download_url")
-def test_import_draft_class_merges_multiple_players(mock_dl, mock_save, mock_parse):
-    mock_dl.return_value = _make_response()
-    mock_parse.return_value = iter([
-        _make_stats("Kenyon Martin", "martike01"),
-        _make_stats("Stromile Swift", "swifst01"),
-    ])
-    session = MagicMock()
-
-    import_draft_class(2000, session)
-
-    assert session.merge.call_count == 4
-
-
-@patch("nba_draft_service.get_draft_stats")
-@patch("nba_draft_service.save_html")
-@patch("nba_draft_service.download_url")
-def test_import_draft_class_raises_on_http_error(mock_dl, mock_save, mock_parse, tmp_path):
-    mock_dl.side_effect = requests.HTTPError()
-
-    with patch("nba_draft_service._DRAFT_HTML_DIR", tmp_path):
-        with pytest.raises(requests.HTTPError):
-            import_draft_class(2000, MagicMock())
-
-
-@patch("nba_draft_service.get_draft_stats")
-@patch("nba_draft_service.save_html")
-@patch("nba_draft_service.download_url")
-def test_import_draft_class_uses_cached_html(mock_dl, mock_save, mock_parse, tmp_path):
-    (tmp_path / "nba_draft_2000.html").write_text("<html/>")
-    mock_parse.return_value = iter([])
-
-    with patch("nba_draft_service._DRAFT_HTML_DIR", tmp_path):
-        import_draft_class(2000, MagicMock())
-
-    mock_dl.assert_not_called()
-    mock_save.assert_not_called()

@@ -19,9 +19,50 @@ python -m venv .
 
 ## Running Tests
 
+The test suite has two categories:
+
+- **Unit tests** (`test_download_utils.py`, `test_models.py`, `test_stats_utils.py`) — no dependencies beyond the venv.
+- **Integration tests** (`test_integration.py`) — spin up a real SQL Server container via [testcontainers](https://testcontainers-python.readthedocs.io/). Requires Docker or Podman running.
+
+**Run everything:**
+
 ```powershell
-.\Scripts\python.exe -m pytest tests\ -v
+.\scripts\python.exe -m pytest tests\ -v
 ```
+
+**Run unit tests only:**
+
+```powershell
+.\scripts\python.exe -m pytest tests\ -v --ignore=tests\test_integration.py
+```
+
+**Run integration tests only:**
+
+```powershell
+.\scripts\python.exe -m pytest tests\test_integration.py -v
+```
+
+### Integration test prerequisites
+
+Docker or Podman must be running before executing integration tests. The tests pull `mcr.microsoft.com/mssql/server:2025-latest` if not already cached, start a throwaway container, run Alembic migrations, and tear everything down after.
+
+**Docker Desktop:**
+
+```powershell
+# No extra config needed — testcontainers auto-detects Docker
+.\scripts\python.exe -m pytest tests\test_integration.py -v
+```
+
+**Podman Desktop (Windows):**
+
+```powershell
+# testcontainers needs the Podman named pipe and Ryuk disabled
+$env:DOCKER_HOST = "npipe:////./pipe/podman-machine-default"
+$env:TESTCONTAINERS_RYUK_DISABLED = "true"
+.\scripts\python.exe -m pytest tests\test_integration.py -v
+```
+
+These variables are set automatically by `tests/conftest.py` when `docker` is not on `PATH`.
 
 ## Project Layout
 

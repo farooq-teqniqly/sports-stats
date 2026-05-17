@@ -28,7 +28,10 @@ def build_connection_url(password: str, db_name: str) -> URL:
         host="127.0.0.1",
         port=1433,
         database=db_name,
-        query={"driver": "ODBC Driver 18 for SQL Server", "TrustServerCertificate": "yes"},
+        query={
+            "driver": "ODBC Driver 18 for SQL Server",
+            "TrustServerCertificate": "yes",
+        },
     )
 
 
