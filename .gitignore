@@ -211,3 +211,6 @@ container-data/
 
 # Claude
 .claude/settings.local.json
+
+# Documentation files
+docs/PR*.md
