@@ -1,10 +1,16 @@
 import os
+import sys
 from logging.config import fileConfig
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+
+from db_utils import build_connection_url
 from models import Base
 
 config = context.config
@@ -14,18 +20,14 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-sa_password = os.environ["SA_PASSWORD"]
+sa_password = os.environ.get("SA_PASSWORD")
+if not sa_password:
+    raise ValueError("SA_PASSWORD environment variable is not set")
 db_name = os.getenv("DB_NAME", "sports_stats")
 config.set_main_option(
     "sqlalchemy.url",
-    f"mssql+pyodbc://sa:{sa_password}@127.0.0.1:1433/{db_name}"
-    "?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes",
+    str(build_connection_url(sa_password, db_name)),
 )
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
 
 
 def run_migrations_offline() -> None:
