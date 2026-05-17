@@ -124,7 +124,7 @@ class NBAAdvancedStats(Base):
             player_id=player_id,
             player_sport=SportTypeEnum.NBA,
             ws=to_float(stats.get("ws")),
-            ws_48=to_float(stats.get("ws_48")),
+            ws_48=to_float(stats.get("ws_per_48")),
             bpm=to_float(stats.get("bpm")),
             vorp=to_float(stats.get("vorp")),
         )
