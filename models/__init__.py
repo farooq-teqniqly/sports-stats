@@ -35,7 +35,13 @@ class Player(Base):
         Returns:
             A new Player instance.
         """
-        return cls(id=stats["player_id"], name=stats["player"], draft_year=draft_year)
+        player_id = stats.get("player_id")
+        player_name = stats.get("player")
+        if not player_id or not player_name:
+            raise ValueError(
+                f"stats dict missing required keys 'player_id' or 'player': {stats!r}"
+            )
+        return cls(id=player_id, name=player_name, draft_year=draft_year)
 
 
 class NBACareerStats(Base):
