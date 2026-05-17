@@ -21,13 +21,12 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 sa_password = os.environ.get("SA_PASSWORD")
-if not sa_password:
-    raise ValueError("SA_PASSWORD environment variable is not set")
-db_name = os.getenv("DB_NAME", "sports_stats")
-config.set_main_option(
-    "sqlalchemy.url",
-    str(build_connection_url(sa_password, db_name)),
-)
+if sa_password:
+    db_name = os.getenv("DB_NAME", "sports_stats")
+    config.set_main_option(
+        "sqlalchemy.url",
+        str(build_connection_url(sa_password, db_name)),
+    )
 
 
 def run_migrations_offline() -> None:
