@@ -45,8 +45,12 @@
 ## Testing
 
 - Framework: pytest
-- One test file per utility module
+- One test file per utility module (`tests/test_<module>.py`)
+- Type annotations required on all fixtures and test functions (`-> None`, `-> Generator[T, None, None]`)
 - Mock HTTP responses with `unittest.mock.MagicMock(spec=requests.Response)`
-- Use `tmp_path` fixture for file I/O tests
-- Test both happy path and error/edge cases (empty input, unknown keys, failed responses)
-- Run `.\scripts\python.exe -m pytest tests\ -v` after every code change; all tests must pass before a task is complete
+- Use `tmp_path` fixture for file I/O tests; always patch `_<DIR>` constants to `tmp_path` so tests never touch real data files
+- Integration tests use testcontainers (`SqlServerContainer`) with explicit port binding and `127.0.0.1` (not `localhost`)
+- Unit tests cover only what integration tests cannot: untriggerable branches (e.g. `player_id=None`), logging behavior, exact URL/value construction
+- Do not duplicate in unit tests what is already verified end-to-end by integration tests
+- Run `.\scripts\python.exe -m pytest tests\ -v` after **every code change**, before every commit — no exceptions, no ignores
+- All tests (unit + integration) must pass locally before any commit or push; never rely on CI to catch failures
