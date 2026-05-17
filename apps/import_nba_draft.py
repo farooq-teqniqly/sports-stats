@@ -6,16 +6,17 @@ import os
 import sys
 from pathlib import Path
 
+import requests
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
+from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
+from db_utils import build_engine
 from nba_draft_service import import_draft_class
-
-load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,21 +26,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def _build_engine():
+def _build_engine() -> Engine:
+    """Create a SQLAlchemy Engine from environment variables."""
     sa_password = os.environ.get("SA_PASSWORD")
     if not sa_password:
         raise ValueError("SA_PASSWORD environment variable is not set")
-
     db_name = os.environ.get("DB_NAME", "sports_stats")
-    url = (
-        f"mssql+pyodbc://sa:{sa_password}@127.0.0.1:1433/{db_name}"
-        "?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
-    )
-    return create_engine(url)
+    return build_engine(sa_password, db_name)
 
 
 def main() -> None:
     """Entry point for the NBA draft stats importer."""
+    load_dotenv()
+
     parser = argparse.ArgumentParser(
         description="Download and persist NBA draft advanced stats from Basketball Reference."
     )
@@ -61,7 +60,7 @@ def main() -> None:
     try:
         with Session(engine) as session:
             import_draft_class(args.year, session)
-    except ValueError as exc:
+    except (ValueError, requests.HTTPError) as exc:
         logger.error("%s", exc)
         sys.exit(1)
 
