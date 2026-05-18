@@ -45,7 +45,10 @@ class Player(Base):
                 f"stats dict missing required keys 'player_id' or 'player': {stats!r}"
             )
         pick_raw = stats.get("pick_overall")
-        draft_position = int(pick_raw) if pick_raw else None
+        try:
+            draft_position = int(pick_raw) if pick_raw else None
+        except ValueError:
+            draft_position = None
         return cls(
             id=player_id,
             name=player_name,

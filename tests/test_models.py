@@ -32,20 +32,26 @@ def test_player_from_draft_stats_missing_player_raises():
         Player.from_draft_stats({"player_id": "martike01"})
 
 
-def test_player_from_draft_stats_with_draft_position():
+def test_player_from_draft_stats_with_draft_position() -> None:
     stats = {"player": "Kenyon Martin", "player_id": "martike01", "pick_overall": "4"}
     player = Player.from_draft_stats(stats, draft_year=2000)
     assert player.draft_position == 4
 
 
-def test_player_from_draft_stats_no_draft_position():
+def test_player_from_draft_stats_no_draft_position() -> None:
     stats = {"player": "Kenyon Martin", "player_id": "martike01"}
     player = Player.from_draft_stats(stats)
     assert player.draft_position is None
 
 
-def test_player_from_draft_stats_empty_draft_position():
+def test_player_from_draft_stats_empty_draft_position() -> None:
     stats = {"player": "Kenyon Martin", "player_id": "martike01", "pick_overall": ""}
+    player = Player.from_draft_stats(stats)
+    assert player.draft_position is None
+
+
+def test_player_from_draft_stats_non_numeric_draft_position_returns_none() -> None:
+    stats = {"player": "Kenyon Martin", "player_id": "martike01", "pick_overall": "n/a"}
     player = Player.from_draft_stats(stats)
     assert player.draft_position is None
 

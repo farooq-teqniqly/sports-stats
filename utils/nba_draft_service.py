@@ -9,7 +9,8 @@ from stats_utils import get_draft_stats
 
 logger = logging.getLogger(__name__)
 
-_DRAFT_STATS = ["ws", "ws_per_48", "bpm", "vorp", "pick_overall"]
+_CAREER_STATS = ["ws", "ws_per_48", "bpm", "vorp"]
+_PLAYER_STATS = ["pick_overall"]
 _DRAFT_HTML_DIR = Path(__file__).parent.parent / "data" / "bball" / "drafts"
 
 
@@ -43,18 +44,19 @@ def import_draft_class(year: int, session: Session) -> None:
     else:
         logger.info("Using cached NBA draft page for %d", year)
 
-    for stats in get_draft_stats(str(html_path), _DRAFT_STATS):
+    for stats in get_draft_stats(str(html_path), _CAREER_STATS + _PLAYER_STATS):
         player_id = stats.get("player_id")
         if not player_id:
             logger.warning("Skipping '%s' — no player_id resolved", stats.get("player"))
             continue
 
-        if stats["missing"]:
+        missing_career = [s for s in stats["missing"] if s in _CAREER_STATS]
+        if missing_career:
             logger.warning(
                 "Player %s (%s) missing stats: %s",
                 stats["player"],
                 player_id,
-                stats["missing"],
+                missing_career,
             )
 
         session.merge(Player.from_draft_stats(stats, draft_year=year))
