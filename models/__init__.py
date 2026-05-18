@@ -1,5 +1,9 @@
+import logging
+
 from sqlalchemy import Float, ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+logger = logging.getLogger(__name__)
 
 
 class Base(DeclarativeBase):
@@ -48,6 +52,12 @@ class Player(Base):
         try:
             draft_position = int(pick_raw) if pick_raw else None
         except ValueError:
+            logger.warning(
+                "Player %s (%s) has non-numeric pick_overall %r — setting draft_position=None",
+                player_name,
+                player_id,
+                pick_raw,
+            )
             draft_position = None
         return cls(
             id=player_id,

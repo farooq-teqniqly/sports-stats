@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 
@@ -50,10 +51,14 @@ def test_player_from_draft_stats_empty_draft_position() -> None:
     assert player.draft_position is None
 
 
-def test_player_from_draft_stats_non_numeric_draft_position_returns_none() -> None:
+def test_player_from_draft_stats_non_numeric_draft_position_returns_none(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     stats = {"player": "Kenyon Martin", "player_id": "martike01", "pick_overall": "n/a"}
-    player = Player.from_draft_stats(stats)
+    with caplog.at_level(logging.WARNING, logger="models"):
+        player = Player.from_draft_stats(stats)
     assert player.draft_position is None
+    assert any("non-numeric pick_overall" in msg for msg in caplog.messages)
 
 
 def test_nba_career_stats_from_draft_stats_numeric_conversion():
