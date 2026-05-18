@@ -72,7 +72,29 @@ def test_logs_warning_for_missing_stats(
         with caplog.at_level(logging.WARNING):
             import_draft_class(2000, MagicMock())
 
-    assert any("missing stats" in msg for msg in caplog.messages)
+    assert any("missing career stats" in msg for msg in caplog.messages)
+
+
+@patch("nba_draft_service.get_draft_stats")
+@patch("nba_draft_service.save_html")
+@patch("nba_draft_service.download_url")
+def test_logs_info_for_missing_player_stats(
+    mock_dl: MagicMock,
+    mock_save: MagicMock,
+    mock_parse: MagicMock,
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """INFO is logged (not WARNING) when pick_overall is missing."""
+    mock_dl.return_value = _make_response()
+    mock_parse.return_value = iter([_make_stats(missing=["pick_overall"])])
+
+    with patch("nba_draft_service._DRAFT_HTML_DIR", tmp_path):
+        with caplog.at_level(logging.INFO):
+            import_draft_class(2000, MagicMock())
+
+    assert any("draft_position will be NULL" in msg for msg in caplog.messages)
+    assert not any("missing career stats" in msg for msg in caplog.messages)
 
 
 @patch("nba_draft_service.get_draft_stats")

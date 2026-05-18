@@ -53,10 +53,19 @@ def import_draft_class(year: int, session: Session) -> None:
         missing_career = [s for s in stats["missing"] if s in _CAREER_STATS]
         if missing_career:
             logger.warning(
-                "Player %s (%s) missing stats: %s",
+                "Player %s (%s) missing career stats: %s",
                 stats["player"],
                 player_id,
                 missing_career,
+            )
+
+        missing_player = [s for s in stats["missing"] if s in _PLAYER_STATS]
+        if missing_player:
+            logger.info(
+                "Player %s (%s) missing player stats (draft_position will be NULL): %s",
+                stats["player"],
+                player_id,
+                missing_player,
             )
 
         session.merge(Player.from_draft_stats(stats, draft_year=year))
