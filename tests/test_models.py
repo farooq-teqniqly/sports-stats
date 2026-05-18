@@ -32,6 +32,24 @@ def test_player_from_draft_stats_missing_player_raises():
         Player.from_draft_stats({"player_id": "martike01"})
 
 
+def test_player_from_draft_stats_with_draft_position():
+    stats = {"player": "Kenyon Martin", "player_id": "martike01", "pick_overall": "4"}
+    player = Player.from_draft_stats(stats, draft_year=2000)
+    assert player.draft_position == 4
+
+
+def test_player_from_draft_stats_no_draft_position():
+    stats = {"player": "Kenyon Martin", "player_id": "martike01"}
+    player = Player.from_draft_stats(stats)
+    assert player.draft_position is None
+
+
+def test_player_from_draft_stats_empty_draft_position():
+    stats = {"player": "Kenyon Martin", "player_id": "martike01", "pick_overall": ""}
+    player = Player.from_draft_stats(stats)
+    assert player.draft_position is None
+
+
 def test_nba_career_stats_from_draft_stats_numeric_conversion():
     stats = {"ws": "48.0", "ws_per_48": ".100", "bpm": "0.1", "vorp": "12.1"}
     cs = NBACareerStats.from_draft_stats("martike01", stats)

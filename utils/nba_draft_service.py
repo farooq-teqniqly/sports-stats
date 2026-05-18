@@ -9,7 +9,7 @@ from stats_utils import get_draft_stats
 
 logger = logging.getLogger(__name__)
 
-_DRAFT_STATS = ["ws", "ws_per_48", "bpm", "vorp"]
+_DRAFT_STATS = ["ws", "ws_per_48", "bpm", "vorp", "pick_overall"]
 _DRAFT_HTML_DIR = Path(__file__).parent.parent / "data" / "bball" / "drafts"
 
 

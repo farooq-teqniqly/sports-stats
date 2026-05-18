@@ -33,6 +33,7 @@ def _make_stats(
         "ws_per_48": ".100",
         "bpm": "0.1",
         "vorp": "12.1",
+        "pick_overall": "4",
     }
 
 
