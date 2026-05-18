@@ -46,7 +46,12 @@ class Player(Base):
             )
         pick_raw = stats.get("pick_overall")
         draft_position = int(pick_raw) if pick_raw else None
-        return cls(id=player_id, name=player_name, draft_year=draft_year, draft_position=draft_position)
+        return cls(
+            id=player_id,
+            name=player_name,
+            draft_year=draft_year,
+            draft_position=draft_position,
+        )
 
 
 class NBACareerStats(Base):
