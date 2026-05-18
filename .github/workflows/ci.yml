@@ -32,7 +32,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Check formatting
-        run: python -m black --check tests/ utils/
+        run: python -m black --check tests/ utils/ models/
 
       - name: Run tests
         run: python -m pytest tests/ -v
