@@ -117,6 +117,7 @@ def test_players_persisted(db_session: Session) -> None:
     assert player is not None
     assert player.name == "Kenyon Martin"
     assert player.draft_year == _DRAFT_YEAR
+    assert player.draft_position == 1
 
 
 def test_career_stats_persisted(db_session: Session) -> None:

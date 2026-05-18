@@ -54,3 +54,4 @@
 - Do not duplicate in unit tests what is already verified end-to-end by integration tests
 - Run `.\scripts\python.exe -m pytest tests\ -v` after **every code change**, before every commit — no exceptions, no ignores
 - All tests (unit + integration) must pass locally before any commit or push; never rely on CI to catch failures
+- After implementing any plan, verify all changes by running the full test suite (`tests\`) including integration tests — do not skip or subset

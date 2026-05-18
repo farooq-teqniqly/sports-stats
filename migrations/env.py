@@ -26,7 +26,11 @@ if not current_url or "placeholder" in current_url:
     if not sa_password:
         raise ValueError("SA_PASSWORD environment variable is not set")
     db_name = os.getenv("DB_NAME", "sports_stats")
-    config.set_main_option("sqlalchemy.url", str(build_connection_url(sa_password, db_name)))
+    url = build_connection_url(sa_password, db_name)
+    config.set_main_option(
+        "sqlalchemy.url",
+        url.render_as_string(hide_password=False).replace("%", "%%"),
+    )
 
 
 def run_migrations_offline() -> None:

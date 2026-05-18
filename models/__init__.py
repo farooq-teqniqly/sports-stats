@@ -1,5 +1,9 @@
+import logging
+
 from sqlalchemy import Float, ForeignKey, Integer, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+logger = logging.getLogger(__name__)
 
 
 class Base(DeclarativeBase):
@@ -12,6 +16,8 @@ class Player(Base):
     Attributes:
         id: Basketball Reference player ID (e.g. ``martike01``), used as primary key.
         name: Player name.
+        draft_year: Year the player was drafted, or None if undrafted.
+        draft_position: Overall pick number, or None if undrafted.
         nba_career_stats: Related NBACareerStats record, if present.
     """
 
@@ -21,6 +27,7 @@ class Player(Base):
     id: Mapped[str] = mapped_column(String(20), primary_key=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     draft_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    draft_position: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     nba_career_stats: Mapped["NBACareerStats"] = relationship(back_populates="player")
 
@@ -29,7 +36,7 @@ class Player(Base):
         """Create a Player instance from a dict yielded by get_draft_stats.
 
         Args:
-            stats: Dict with keys ``player``, ``player_id``.
+            stats: Dict with keys ``player``, ``player_id``, and optionally ``pick_overall``.
             draft_year: Year the player was drafted, or None if undrafted.
 
         Returns:
@@ -41,7 +48,23 @@ class Player(Base):
             raise ValueError(
                 f"stats dict missing required keys 'player_id' or 'player': {stats!r}"
             )
-        return cls(id=player_id, name=player_name, draft_year=draft_year)
+        pick_raw = stats.get("pick_overall")
+        try:
+            draft_position = int(pick_raw) if pick_raw else None
+        except ValueError:
+            logger.warning(
+                "Player %s (%s) has non-numeric pick_overall %r — setting draft_position=None",
+                player_name,
+                player_id,
+                pick_raw,
+            )
+            draft_position = None
+        return cls(
+            id=player_id,
+            name=player_name,
+            draft_year=draft_year,
+            draft_position=draft_position,
+        )
 
 
 class NBACareerStats(Base):
