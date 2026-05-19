@@ -11,7 +11,27 @@ from alembic.config import Config
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.engine import URL, Engine
 from sqlalchemy.orm import Session
-from testcontainers.mssql import SqlServerContainer
+import warnings
+
+from testcontainers.core.wait_strategies import ExecWaitStrategy
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    from testcontainers.mssql import SqlServerContainer as _SqlServerContainer
+
+
+class SqlServerContainer(_SqlServerContainer):
+    """SqlServerContainer using structured wait strategy instead of deprecated decorator."""
+
+    def _connect(self) -> None:
+        ExecWaitStrategy(
+            [
+                "bash",
+                "-c",
+                '/opt/mssql-tools*/bin/sqlcmd -U "$SQLSERVER_USER" -P "$SA_PASSWORD" -Q \'SELECT 1\' -C',
+            ]
+        ).wait_until_ready(self)
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "utils"))
 sys.path.insert(0, str(Path(__file__).parent.parent))
